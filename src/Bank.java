@@ -11,7 +11,7 @@ public class Bank {
     }
     
     public void run() {
-    	System.out.println("=== Git test: Bank App starting ==="); //test again
+    	System.out.println("=== Git test: Bank App starting ===");
 
         while (true) {
             System.out.println("\n#--------------------------------#");
