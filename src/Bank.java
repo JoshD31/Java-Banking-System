@@ -1,10 +1,13 @@
 import java.sql.Date;
 import java.util.*;
+import java.util.Map;
+import java.util.HashMap;
 
 public class Bank {
-    private List<Account> accounts = new ArrayList<>();
+    private Map<String, Account> accounts = new HashMap<>();
     private Account currentAccount;
     private Scanner scanner = new Scanner(System.in);
+    private int accountCounter = 1000;
 
     public static void main(String[] args) {
         new Bank().run();
@@ -85,7 +88,7 @@ public class Bank {
         Account acct = new Account(user, acctNum, pin, 0.0);
         acct.deposit(initialDeposit);
 
-        accounts.add(acct);
+        accounts.put(acctNum, acct);
         currentAccount = acct;
         System.out.println("Account created! Your account number is " + acctNum);
     }
@@ -145,7 +148,7 @@ public class Bank {
             System.out.printf("Final payout: $%.2f (2%% fee = $%.2f).%n", payout, fee);
         }
         System.out.println("Closing account " + currentAccount.getAccountNumber());
-        accounts.remove(currentAccount);
+        accounts.remove(currentAccount.getAccountNumber());
         currentAccount = null;
     }
 
@@ -155,17 +158,17 @@ public class Bank {
     }
 
     private Account findAccount(String acctNum) {
-        for (Account acct : accounts) {
-            if (acct.getAccountNumber().equals(acctNum)) return acct;
-        }
-        return null;
+    	return accounts.get(acctNum);
     }
 
     private String generateAccountNumber(String fn, String ln, String dob) {
         String L = ln.toUpperCase().substring(0, Math.min(2, ln.length()));
         String F = fn.toUpperCase().substring(0, Math.min(2, fn.length()));
         String year = dob.length() >= 4 ? dob.substring(0, 4) : "0000";
-        return L + F + year;
+        String accountNum = L + F + year + "-" + String.format("%-4d", accountCounter);
+        accountCounter++;
+        
+        return accountNum;
     }
 
     private int readInt() {
