@@ -19,13 +19,10 @@ public class Bank {
             String input = scanner.nextLine().trim();
             
             try {
-                // Try to parse the date
                 LocalDate date = LocalDate.parse(input);
-                
-                // Additional validation: check if date is reasonable
                 LocalDate today = LocalDate.now();
-                LocalDate minDate = today.minusYears(120); // No one is older than 120
-                LocalDate maxDate = today.minusYears(18);  // Must be at least 18
+                LocalDate minDate = today.minusYears(120);
+                LocalDate maxDate = today.minusYears(18);
                 
                 if (date.isAfter(today)) {
                     System.out.println("Date cannot be in the future.");
@@ -42,7 +39,7 @@ public class Bank {
                 }
                 
                 
-                return date;  // Valid date!
+                return date;
                 
             } catch (Exception e) {
                 System.out.println("Invalid date format. Please use YYYY-MM-DD (e.g., 2000-12-31)");
