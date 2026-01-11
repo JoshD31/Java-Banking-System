@@ -86,7 +86,7 @@ public class Bank {
             String pin = scanner.nextLine().trim();
 
             Account acct = findAccount(acctNum);
-            if (acct != null && acct.getPin().equals(pin)) {
+            if (acct != null && acct.verifyPin(pin)) {
                 currentAccount = acct;
                 System.out.println("Login successful.");
                 return true;
@@ -128,6 +128,7 @@ public class Bank {
         while (currentAccount != null) {
             System.out.println("\n#--------------------------------#");
             System.out.println("|             Menu               |");
+            System.out.println("| Account: " + maskAccountNumber(currentAccount.getAccountNumber()) + "     |");
             System.out.println("| 1. View balance                |");
             System.out.println("| 2. Deposit                     |");
             System.out.println("| 3. Withdraw                    |");
@@ -233,6 +234,15 @@ public class Bank {
         
         return accountNum;
     }
+ // Helper method to mask account number (show only last 4 characters)
+    private String maskAccountNumber(String accountNumber) {
+        if (accountNumber.length() <= 4) {
+            return "****";
+        }
+        int visibleChars = 4;
+        int maskedLength = accountNumber.length() - visibleChars;
+        return "*".repeat(maskedLength) + accountNumber.substring(maskedLength);
+    }
 
     private int readInt() {
         try {
@@ -249,7 +259,7 @@ public class Bank {
             return -1;
         }
     }
- // Validate and read first name
+
     private String readValidFirstName() {
         while (true) {
             System.out.print("| Enter your firstname: ");
@@ -263,7 +273,6 @@ public class Bank {
         }
     }
 
-    // Validate and read last name
     private String readValidLastName() {
         while (true) {
             System.out.print("| Enter your lastname: ");
@@ -277,7 +286,6 @@ public class Bank {
         }
     }
 
-    // Validate and read SSN
     private String readValidSSN() {
         while (true) {
             System.out.print("| Enter your ssn (9 digits, no dashes): ");
@@ -291,7 +299,6 @@ public class Bank {
         }
     }
 
-    // Validate and read email
     private String readValidEmail() {
         while (true) {
             System.out.print("| Enter your email: ");
@@ -311,7 +318,6 @@ public class Bank {
             System.out.print("| Enter your phone (XXX-XXX-XXXX): ");
             String phone = scanner.nextLine().trim();
             
-            // Try to auto-format if they entered 10 digits without dashes
             String formatted = InputValidator.formatPhoneNumber(phone);
             
             if (InputValidator.isValidPhone(formatted)) {
@@ -322,7 +328,6 @@ public class Bank {
         }
     }
 
-    // Validate and read address
     private String readValidAddress() {
         while (true) {
             System.out.print("| Enter your address: ");
@@ -336,7 +341,6 @@ public class Bank {
         }
     }
 
-    // Validate and read PIN
     private String readValidPin() {
         while (true) {
             System.out.print("| Enter your pin (4-6 digits): ");
@@ -350,7 +354,6 @@ public class Bank {
         }
     }
 
-    // Validate deposit amount
     private double readValidDepositAmount() {
         while (true) {
             System.out.print("| Initial deposit: $");
@@ -379,9 +382,3 @@ public class Bank {
         }
     }
 }
-
-//import java.util.Date;
-/*@SuppressWarnings("deprecation")
-public static void main(String[] args) {
-	User me = new User("josh", "davidowitz", new Date(2000,11,30), "1234152", "addy", "JoshD@gmail.com", "917-123-4567");
-	System.out.println(me);*/

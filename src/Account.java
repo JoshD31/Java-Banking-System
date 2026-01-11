@@ -1,17 +1,44 @@
 import java.math.BigDecimal;       
-import java.math.RoundingMode;    
+import java.math.RoundingMode;
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 
 public class Account {
     private User user;
     private String accountNumber;
-    private String pin;
+    private String hashedPin;
     private BigDecimal balance;
 
     public Account(User user, String accountNumber, String pin, BigDecimal initialDeposit) {
         this.user = user;
         this.accountNumber = accountNumber;
-        this.pin = pin;
+        this.hashedPin = hashPin(pin);
         this.balance = initialDeposit;
+    }
+    
+    private String hashPin(String pin) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(pin.getBytes(StandardCharsets.UTF_8));
+            
+            // Convert byte array to hex string
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to hash PIN", e);
+        }
+    }
+    
+    public boolean verifyPin(String pin) {
+        return this.hashedPin.equals(hashPin(pin));
     }
 
     public boolean deposit (BigDecimal amount) {
@@ -41,9 +68,8 @@ public class Account {
 
     public User getUser() { return user; }
     public String getAccountNumber() { return accountNumber; }
-    public String getPin() { return pin; }
     public BigDecimal getBalance() { return balance; }
 
-    public void setPin(String pin) { this.pin = pin; }
+    public void setPin(String newPin) { this.hashedPin = hashPin(newPin); }
     public void setBalance(BigDecimal balance) { this.balance = balance; }
 }
