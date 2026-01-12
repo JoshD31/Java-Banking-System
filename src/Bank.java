@@ -13,41 +13,6 @@ public class Bank {
     private int accountCounter = 1000;
     
     
-    private LocalDate readValidDate() {
-        while (true) {
-            System.out.print("| Enter your dob (YYYY-MM-DD): ");
-            String input = scanner.nextLine().trim();
-            
-            try {
-                LocalDate date = LocalDate.parse(input);
-                LocalDate today = LocalDate.now();
-                LocalDate minDate = today.minusYears(120);
-                LocalDate maxDate = today.minusYears(18);
-                
-                if (date.isAfter(today)) {
-                    System.out.println("Date cannot be in the future.");
-                    continue;
-                }
-                
-                if (date.isBefore(minDate)) {
-                    System.out.println("Invalid date: Too far in the past.");
-                    continue;
-                }
-                if (date.isAfter(maxDate)) {
-                    System.out.println("You must be at least 18 years old.");
-                    continue;
-                }
-                
-                
-                return date;
-                
-            } catch (Exception e) {
-                System.out.println("Invalid date format. Please use YYYY-MM-DD (e.g., 2000-12-31)");
-            }
-        }
-    }
-    
-
     public static void main(String[] args) {
         new Bank().run();
     }
@@ -84,7 +49,6 @@ public class Bank {
             String acctNum = scanner.nextLine().trim();
             System.out.print("| Enter your pin: ");
             String pin = scanner.nextLine().trim();
-
             Account acct = findAccount(acctNum);
             if (acct != null && acct.verifyPin(pin)) {
                 currentAccount = acct;
@@ -147,56 +111,166 @@ public class Bank {
             }
         }
     }
+    private LocalDate readValidDate() {
+        while (true) {
+            System.out.print("| Enter your dob (YYYY-MM-DD): ");
+            String input = scanner.nextLine().trim();
+            
+            String formattedDate = formatDateInput(input);
+            
+            if (formattedDate == null) {
+                System.out.println("Invalid date format. Use YYYYMMDD or YYYY-MM-DD (e.g., 20001231 or 2000-12-31)");
+                continue;
+            }
+            
+            try {
+                LocalDate date = LocalDate.parse(formattedDate);
+                LocalDate today = LocalDate.now();
+                
+                // Check 1: Future date (check this FIRST)
+                if (date.isAfter(today)) {
+                    System.out.println("Date cannot be in the future.");
+                    continue;
+                }
+                
+                // Check 2: Too old (120+ years ago)
+                LocalDate minDate = today.minusYears(120);
+                if (date.isBefore(minDate)) {
+                    System.out.println("Invalid date: Too far in the past.");
+                    continue;
+                }
+                
+                // Check 3: Too young (less than 18 years old)
+                LocalDate minAgeDate = today.minusYears(18);
+                if (date.isAfter(minAgeDate)) {
+                    System.out.println("You must be at least 18 years old.");
+                    continue;
+                }
+                
+                return date;
+                
+            } catch (Exception e) {
+                System.out.println("Invalid date. Please check the day/month values.");
+            }
+        }
+    }
+
+    // Helper method to format date input
+    private String formatDateInput(String input) {
+        // Remove all dashes, slashes, spaces, and dots
+        String cleaned = input.replaceAll("[-/\\s.]", "");
+        
+        // Check if it's 8 digits (YYYYMMDD)
+        if (cleaned.matches("^\\d{8}$")) {
+            // Extract parts: YYYYMMDD
+            String year = cleaned.substring(0, 4);
+            String month = cleaned.substring(4, 6);
+            String day = cleaned.substring(6, 8);
+            return year + "-" + month + "-" + day;
+        }
+        
+        // Check if input already has dashes (YYYY-MM-DD)
+        if (input.matches("^\\d{4}-\\d{2}-\\d{2}$")) {
+            return input;
+        }
+        
+        // Invalid format
+        return null;
+    }
+    
 
     private void viewBalance() {
         System.out.printf("Current balance: $%.2f%n", currentAccount.getBalance().setScale(2, RoundingMode.HALF_UP));
     }
 
     private void deposit() {
+    	while (true) {
         System.out.print("Amount to deposit: $");
         double amtInput = readDouble();
         
         if (amtInput == -1) {
             System.out.println("Invalid input. Please enter a number.");
-            return;
+            continue;
         }
         
         if (amtInput <= 0) {
             System.out.println("Deposit failed. Enter a valid amount.");
-            return;
+            continue;
+        }
+        if (amtInput < 0.01) {
+            System.out.println("Minimum deposit is $0.01");
+            continue;
+        }
+        if (!InputValidator.isValidAmount(amtInput)) {
+            System.out.println("Amount too large. Maximum is $1,000,000.");
+            continue;
         }
         BigDecimal amt = new BigDecimal(String.valueOf(amtInput));
         
         if (currentAccount.deposit(amt)) {
             System.out.printf("Deposited $%s with 0.2%% interest.%n", amt.setScale(2, RoundingMode.HALF_UP));
+            	return;
         } else {
             System.out.println("Deposit failed. Enter a valid amount.");
+            continue;
         }
     }
+}
 
     private void withdraw() {
+    	while(true) {
     	System.out.print("Amount to withdraw: $");
         double amtInput = readDouble();
         
         if (amtInput == -1) {
             System.out.println("Invalid input. Please enter a number.");
-            return;
+            continue;
         }
         
         if (amtInput <= 0) {
             System.out.println("Withdrawal failed. Check your balance or amount.");
-            return;
+            continue;
+        }
+        
+        if (amtInput < 0.01) {
+            System.out.println("Minimum withdrawal is $0.01");
+            continue;
         }
         
         BigDecimal amount = new BigDecimal(String.valueOf(amtInput));
         
+        BigDecimal feeRate = new BigDecimal("0.02");
+        BigDecimal fee = amount.multiply(feeRate).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal totalCharge = amount.add(fee);
+        
+        // Check if user has enough
+        if (currentAccount.getBalance().compareTo(totalCharge) < 0) {
+            System.out.printf("Insufficient funds. You need $%s (including $%s fee) but only have $%s.%n",
+                             totalCharge.setScale(2, RoundingMode.HALF_UP),
+                             fee.setScale(2, RoundingMode.HALF_UP),
+                             currentAccount.getBalance().setScale(2, RoundingMode.HALF_UP));
+            
+            // Ask if they want to try again
+            System.out.print("Try a different amount? (y/n): ");
+            String choice = scanner.nextLine().trim().toLowerCase();
+            if (!choice.equals("y")) {
+                return;  // Exit method
+            }
+            continue;  // Try again
+        }
+        
+        // Sufficient funds - proceed
         if (currentAccount.withdraw(amount)) {
-            System.out.printf("Withdrew $%s with 2%% fee.%n", amount.setScale(2, RoundingMode.HALF_UP));
+            System.out.printf("✓ Withdrew $%s with 2%% fee ($%s).%n", 
+                             amount.setScale(2, RoundingMode.HALF_UP),
+                             fee.setScale(2, RoundingMode.HALF_UP));
+            return;  // Exit method
         } else {
-            System.out.println("Withdrawal failed. Check your balance or amount.");
+            System.out.println("Withdrawal failed. Please try again.");
+            continue;
         }
     }
-
+}
     private void closeAccount() {
         BigDecimal bal = currentAccount.getBalance();
         if (bal.compareTo(BigDecimal.ZERO) > 0) {
@@ -288,13 +362,15 @@ public class Bank {
 
     private String readValidSSN() {
         while (true) {
-            System.out.print("| Enter your ssn (9 digits, no dashes): ");
+            System.out.print("| Enter your ssn (9 digits): ");
             String ssn = scanner.nextLine().trim();
             
-            if (InputValidator.isValidSSN(ssn)) {
-                return ssn;
+            String formatted = InputValidator.formatSSN(ssn);
+            
+            if (InputValidator.isValidSSN(formatted)) {
+                return formatted;
             } else {
-                System.out.println("Invalid SSN. Must be exactly 9 digits (e.g., 123456789).");
+                System.out.println("Invalid SSN. Must be exactly 9 digits.");
             }
         }
     }
@@ -315,7 +391,7 @@ public class Bank {
     // Validate and read phone number
     private String readValidPhone() {
         while (true) {
-            System.out.print("| Enter your phone (XXX-XXX-XXXX): ");
+            System.out.print("| Enter your phone # (XXX-XXX-XXXX): ");
             String phone = scanner.nextLine().trim();
             
             String formatted = InputValidator.formatPhoneNumber(phone);

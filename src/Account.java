@@ -15,7 +15,9 @@ public class Account {
         this.hashedPin = hashPin(pin);
         this.balance = initialDeposit;
     }
-    
+ // TODO: Upgrade to BCrypt or Argon2 for production use
+ // SHA-256 is not ideal for password hashing as it's too fast
+ // and doesn't include built-in salting
     private String hashPin(String pin) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
